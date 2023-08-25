@@ -151,7 +151,7 @@ class Config:
         cathode_paramfile = self.D_s['cathode']
         if not os.path.isabs(cathode_paramfile):
             cathode_paramfile = os.path.join(self.path, cathode_paramfile)
-            self.paramfiles['c'] = cathode_paramfile
+        self.paramfiles['c'] = cathode_paramfile
         self.D_c = ParameterSet(cathode_paramfile, 'electrode', self.path)
 
         if 'a' in self['trodes']:
