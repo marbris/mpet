@@ -86,7 +86,7 @@ class Myhdf5DataReporterFastSurface(daeMatlabMATFileDataReporter):
 
                         else:
                             # only save the surface concentration
-                            shape = len(mdict[dkeybase].shape)
+                            shape = len(mdict[dkeybase][:,-1].shape)
                             mat_dat.create_dataset(dkeybase, data=mdict[dkeybase][:,-1],
                                                    maxshape=(None,)*shape, compression='lzf')
 
