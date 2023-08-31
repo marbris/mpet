@@ -10,6 +10,87 @@ import scipy.io as sio
 import daetools.pyDAE as dae
 from daetools.pyDAE.data_reporters import daeMatlabMATFileDataReporter
 
+# My new datareporter. 
+# Changes:
+    # The regexp match now catches volume/particle indices with more than one digit
+    # The Surface concentration of each particle is stored, rather than the full particle gradients at the final time step.
+class Myhdf5DataReporterFastSurface(daeMatlabMATFileDataReporter):
+    """Ignores internal particle concentrations with hdf5 data saving to be faster.
+    Input is dataReporter"""
+
+    def WriteDataToFile(self):
+        mdict = {}
+        # 0 if single simulation, 1 if continued simulation
+        continued_sim = 0
+        # if we are in a directory that has continued simulations (maccor reader)
+        if os.path.isfile(self.ConnectionString + ".hdf5"):
+            if os.stat(self.ConnectionString + ".hdf5").st_size != 0:
+                continued_sim = 1
+                # remains 0 if not continued sim
+        with h5py.File(self.ConnectionString + ".hdf5", 'a') as mat_dat:
+            for var in self.Process.Variables:
+                # Remove the model name part of the output key for
+                # brevity.
+                dkeybase = var.Name[var.Name.index(".")+1:]
+                # Remove dots from variable keys. This enables the mat
+                # file to be read by, e.g., MATLAB.
+                dkeybase = dkeybase.replace(".", "_")
+                # Remove port variables
+                if "port" not in dkeybase:
+                    mdict[dkeybase] = var.Values  # mdict stores the new data
+                    # if we are in a directory that has continued simulations (maccor reader)
+                    if continued_sim == 1:
+                        # increment time by the previous end time of the last simulation
+                        tend = mat_dat['phi_applied_times'][-1]
+
+                        # if particle concentrations, remove and overwrite, but not if its cbar
+                        if (re.match("partTrode.vol[0-9]+part[0-9]+_c", dkeybase) is None) or \
+                                (re.search("cbar", dkeybase) is not None):
+                            # resize and append dkeybase variable
+                            mat_dat[dkeybase].resize(
+                                (mat_dat[dkeybase].shape[0] + mdict[dkeybase].shape[0]), axis=0)
+                            mat_dat[dkeybase][-mdict[dkeybase].shape[0]:] = mdict[dkeybase]
+
+                            if dkeybase == 'phi_applied':
+                                mdict['times'] = var.TimeValues + tend
+                                # resize and append dkeybase varibale
+                                mat_dat['phi_applied_times'].resize(
+                                    (mat_dat['phi_applied_times'].shape[0]
+                                     + mdict['times'].shape[0]), axis=0)
+                                mat_dat['phi_applied_times'][-mdict['times'].shape[0]:] = \
+                                    mdict['times']
+
+                        else:
+                            # overwrite the old file
+                            del mat_dat[dkeybase]
+                            # only save the surface concentration
+                            mat_dat.create_dataset(
+                                dkeybase, data=mdict[dkeybase][:,-1], compression='lzf')
+
+                    else:  # (continued_sim == 1)
+                        # if cwe are not in a continuation directory
+                        # if particle concentrations, remove and overwrite, but not if its cbar
+                        if (re.match("partTrode.vol[0-9]+part[0-9]+_c", dkeybase) is None) or \
+                                (re.search("cbar", dkeybase) is not None):
+                            # create dataset if continued_sim == 0
+                            # maxshape is set dpeending on whether its a 2D array or a 1D array
+                            shape = len(mdict[dkeybase].shape)
+                            mat_dat.create_dataset(dkeybase, data=mdict[dkeybase],
+                                                   maxshape=(None,)*shape, compression='lzf')
+
+                            if dkeybase == 'phi_applied':
+                                # only save times for voltage
+                                mdict['times'] = var.TimeValues
+                                mat_dat.create_dataset('phi_applied_times', data=mdict['times'],
+                                                       maxshape=(None,), compression='lzf')
+
+                        else:
+                            # only save the surface concentration
+                            shape = len(mdict[dkeybase].shape)
+                            mat_dat.create_dataset(dkeybase, data=mdict[dkeybase][:,-1],
+                                                   maxshape=(None,)*shape, compression='lzf')
+
+
 
 class Myhdf5DataReporterFast(daeMatlabMATFileDataReporter):
     """Ignores internal particle concentrations with hdf5 data saving to be faster.
@@ -210,6 +291,8 @@ def setup_data_reporters(simulation, config, outdir):
         simulation.dr = Myhdf5DataReporter()
     elif config["dataReporter"] == "hdf5Fast":
         simulation.dr = Myhdf5DataReporterFast()
+    elif config["dataReporter"] == "hdf5FastSurface":
+        simulation.dr = Myhdf5DataReporterFastSurface()
     elif config["dataReporter"] != "mat":
         # if the data reporter called hasn't been implemented yet
         raise Exception("Data Reporter " + config["dataReporter"] + " not installed")
