@@ -114,6 +114,23 @@ def main(paramfile, keepArchive=True):
         paramFile = os.path.join(outdir, paramFileName)
         copyfile(config.paramfiles[trode], paramFile)
 
+        if config[trode, 'muRfunc_filename'] is not None:
+            FileName = f'muRfunc_{trode}.py'
+            File = os.path.join(outdir, FileName)
+            copyfile(config[trode, 'muRfunc_filename'], File)
+
+        if config[trode, 'rxnType_filename'] is not None:
+            FileName = f'rxnType_{trode}.py'
+            File = os.path.join(outdir, FileName)
+            copyfile(config[trode, 'rxnType_filename'], File)
+
+    
+    if config['SMset_filename'] is not None:
+        FileName = 'SMset.py'
+        File = os.path.join(outdir, FileName)
+        copyfile(config['SMset_filename'], File)
+
+
     config.write(outdir)
 
     # Store info about this script
