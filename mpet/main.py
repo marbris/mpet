@@ -123,6 +123,11 @@ def main(paramfile, keepArchive=True):
             File = os.path.join(outdir, FileName)
             copyfile(config[trode, 'muRfunc_filename'], File)
 
+        if config[trode, 'Dfunc_filename'] is not None:
+            FileName = f'Dfunc_{trode}.py'
+            File = os.path.join(outdir, FileName)
+            copyfile(config[trode, 'Dfunc_filename'], File)
+
         if config[trode, 'rxnType_filename'] is not None:
             FileName = f'rxnType_{trode}.py'
             File = os.path.join(outdir, FileName)
