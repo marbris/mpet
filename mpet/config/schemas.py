@@ -52,7 +52,8 @@ def tobool(value):
 
 
 #: System parameters, per section
-system = {'Sim Params': {'profileType': lambda x:
+system = {'Sim Params': {Optional('SaveFolderPrefix', default=None): str, 
+                        'profileType': lambda x:
                          check_allowed_values(x, ["CC", "CV", "CP", "CCsegments", "CVsegments"]),
                          'Crate': Use(float),
                          Optional('power', default=None): Use(float),

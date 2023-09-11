@@ -94,6 +94,10 @@ def main(paramfile, keepArchive=True):
 
     # Directories we'll store output in.
     outdir_name = time.strftime("%Y%m%d_%H%M%S", time.localtime())
+    
+    if config['SaveFolderPrefix'] is not None:
+        outdir_name = config['SaveFolderPrefix'] + '_' + outdir_name
+    
     outdir_path = os.path.join(os.getcwd(), "history")
     outdir = os.path.join(outdir_path, outdir_name)
     # Make sure there's a place to store the output
