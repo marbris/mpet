@@ -290,6 +290,12 @@ class Mod1var(dae.daeModel):
         else:
             self.Rxn = dae.daeVariable("Rxn", dae.no_t, self, "Rate of reaction", [self.Dmn])
 
+        # adding effective surface overpotential as variable so I can look at it 
+        if config[trode, "type"] not in ["ACR"]:
+            self.eta_eff = dae.daeVariable("eta_eff", dae.no_t, self, "Effective overpotential across particle surface")
+        else:
+            self.eta_eff = dae.daeVariable("eta_eff", dae.no_t, self, "Effective overpotential across particle surface", [self.Dmn])
+
         # Get reaction rate function
         rxnType = config[trode, "rxnType"]
         self.calc_rxn_rate = utils.import_function(config[trode, "rxnType_filename"],
@@ -418,6 +424,15 @@ class Mod1var(dae.daeModel):
         else:
             eq = self.CreateEquation("Rxn")
             eq.Residual = self.Rxn() - Rxn
+        
+        # adding effective surface overpotential as equation so I can look at it 
+        if self.get_trode_param("type") in ["ACR"]:
+            for i in range(N):
+                eq = self.CreateEquation("eta_eff_{i}".format(i=i))
+                eq.Residual = self.eta_eff(i) - eta_eff[i]
+        else:
+            eq = self.CreateEquation("eta_eff")
+            eq.Residual = self.eta_eff() - eta_eff
 
         # Get solid particle fluxes (if any) and RHS
         if self.get_trode_param("type") in ["ACR"]:
