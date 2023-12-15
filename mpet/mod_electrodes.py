@@ -407,6 +407,10 @@ class Mod1var(dae.daeModel):
         self.mu_O = dae.daeVariable(
             "mu_O", dae.no_t, self, "Electrochemical potential of oxidized state"
         )
+        # adding muR_surf as variable so I can look at it
+        self.muR_surf = dae.daeVariable(
+            "muR_surf", dae.no_t, self, "Chemical Potential of Particle Surface"
+        )
 
         # Get reaction rate function
         rxnType = config[trode, "rxnType"]
@@ -576,6 +580,10 @@ class Mod1var(dae.daeModel):
         else:
             eq = self.CreateEquation("eta_eff")
             eq.Residual = self.eta_eff() - eta_eff
+
+        # adding muR_surf as variable so I can look at it
+        eq = self.CreateEquation("muR_surf")
+        eq.Residual = self.muR_surf() - muR_surf
 
         # Get solid particle fluxes (if any) and RHS
         if self.get_trode_param("type") in ["ACR"]:
