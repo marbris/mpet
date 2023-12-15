@@ -411,6 +411,22 @@ class Mod1var(dae.daeModel):
         self.muR_surf = dae.daeVariable(
             "muR_surf", dae.no_t, self, "Chemical Potential of Particle Surface"
         )
+        # adding SEI_IR as variable so I can look at it
+        if config[trode, "type"] not in ["ACR"]:
+            self.SEI_IR = dae.daeVariable(
+                "SEI_IR",
+                dae.no_t,
+                self,
+                "IR-drop across particle surface",
+            )
+        else:
+            self.SEI_IR = dae.daeVariable(
+                "SEI_IR",
+                dae.no_t,
+                self,
+                "IR-drop across particle surface",
+                [self.Dmn],
+            )
 
         # Get reaction rate function
         rxnType = config[trode, "rxnType"]
@@ -584,6 +600,17 @@ class Mod1var(dae.daeModel):
         # adding muR_surf as variable so I can look at it
         eq = self.CreateEquation("muR_surf")
         eq.Residual = self.muR_surf() - muR_surf
+
+        # adding SEI_IR as equation so I can look at it
+        if self.get_trode_param("type") in ["ACR"]:
+            for i in range(N):
+                eq = self.CreateEquation("SEI_IR_{i}".format(i=i))
+                eq.Residual = self.SEI_IR(i) - self.Rxn(i) * self.get_trode_param(
+                    "Rfilm"
+                )
+        else:
+            eq = self.CreateEquation("SEI_IR")
+            eq.Residual = self.SEI_IR() - self.Rxn() * self.get_trode_param("Rfilm")
 
         # Get solid particle fluxes (if any) and RHS
         if self.get_trode_param("type") in ["ACR"]:
