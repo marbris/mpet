@@ -598,8 +598,13 @@ class Mod1var(dae.daeModel):
             eq.Residual = self.eta_eff() - eta_eff
 
         # adding muR_surf as variable so I can look at it
-        eq = self.CreateEquation("muR_surf")
-        eq.Residual = self.muR_surf() - muR_surf
+        if self.get_trode_param("type") in ["ACR"]:
+            for i in range(N):
+                eq = self.CreateEquation("muR_surf_{i}".format(i=i))
+                eq.Residual = self.muR_surf(i) - muR_surf[i]
+        else:
+            eq = self.CreateEquation("muR_surf")
+            eq.Residual = self.muR_surf() - muR_surf
 
         # adding SEI_IR as equation so I can look at it
         if self.get_trode_param("type") in ["ACR"]:
