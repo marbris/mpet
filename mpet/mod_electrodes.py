@@ -387,12 +387,19 @@ class Mod1var(dae.daeModel):
             )
 
         # adding effective surface overpotential as variable so I can look at it
+        # adding muR_surf as variable so I can look at it
         if config[trode, "type"] not in ["ACR"]:
             self.eta_eff = dae.daeVariable(
                 "eta_eff",
                 dae.no_t,
                 self,
                 "Effective overpotential across particle surface",
+            )
+            self.muR_surf = dae.daeVariable(
+                "muR_surf",
+                dae.no_t,
+                self,
+                "Chemical Potential of Particle Surface",
             )
         else:
             self.eta_eff = dae.daeVariable(
@@ -402,14 +409,17 @@ class Mod1var(dae.daeModel):
                 "Effective overpotential across particle surface",
                 [self.Dmn],
             )
+            self.muR_surf = dae.daeVariable(
+                "muR_surf",
+                dae.no_t,
+                self,
+                "Chemical Potential of Particle Surface",
+                [self.Dmn],
+            )
 
         # adding mu_O as variable so I can look at it
         self.mu_O = dae.daeVariable(
             "mu_O", dae.no_t, self, "Electrochemical potential of oxidized state"
-        )
-        # adding muR_surf as variable so I can look at it
-        self.muR_surf = dae.daeVariable(
-            "muR_surf", dae.no_t, self, "Chemical Potential of Particle Surface"
         )
         # adding SEI_IR as variable so I can look at it
         if config[trode, "type"] not in ["ACR"]:
